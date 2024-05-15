@@ -7,8 +7,8 @@ import Queue from 'bull';
 import sha1 from 'sha1';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
-const userQueue = new Queue('userQueue');
 
+const userQueue = new Queue('userQueue');
 const userRedis = {
 
   async getUser(query) {
