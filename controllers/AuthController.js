@@ -2,10 +2,32 @@
  * Task 4. Authenticate a user.
  * AuthController.js that contains new endpoints.
  */
+import { v4 as uuidv4 } from 'uuid';
+import { userectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import sha1 from 'sha1';
 import redisClient from '../utils/redis';
-import { v4 as uuidv4 } from 'uuid';
-import userUtils from '../utils/user';
+import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
+
+
+const userRedis = {
+
+  async getUser(query) {
+    const user = await dbClient.usersCollection.findOne(query);
+    return user;
+  },
+
+  async getUserKI(request) {
+    const tt = 'X-Token'
+    const user = { userId: null, key: null };
+    const tk = request.header(tt);
+    if (!tk) return user;
+    user.key = `auth_${tk}`;
+    user.userId = await redisClient.get(user.key);
+    return user;
+  },
+};
 
 class AuthController {
   /**
@@ -23,12 +45,11 @@ class AuthController {
    * with a status code 200
    * @param {request} request
    * @param {response} response
-   * @returns 
+   * @returns
    */
   static async getConnect(request, response) {
     const Authorization = request.header('Authorization') || '';
     const pwd = Authorization.split(' ')[1];
-
     if (!pwd) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
@@ -40,7 +61,7 @@ class AuthController {
       return response.status(401).send({ error: 'Unauthorized' });
     }
     const pwdSha = sha1(password);
-    const user = await userUtils.getUser({
+    const user = await userRedis.getUser({
       email,
       password: pwdSha,
     });
@@ -48,10 +69,10 @@ class AuthController {
     const au = uuidv4();
     const key = `auth_${au}`;
     if (!user) {
-        return response.status(401).send({ error: 'Unauthorized' });
+      return response.status(401).send({ error: 'Unauthorized' });
     }
     await redisClient.set(key, user._id.toString(), exp);
-    return response.status(200).send({ token });
+    return response.status(200).send({ au });
   }
 
   /**
@@ -63,10 +84,10 @@ class AuthController {
    * return nothing with a status code 204
    * @param {request} request
    * @param {response} response
-   * @returns 
+   * @returns
    */
   static async getDisconnect(request, response) {
-    const { userId, key } = await userUtils.getUserIdAndKey(request);
+    const { userId, key } = await userRedis.getUserKI(request);
     if (!userId) {
       return response.status(401).send({ error: 'Unauthorized' });
     }

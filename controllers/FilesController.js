@@ -3,9 +3,11 @@
  */
 
 import { userectId } from 'mongodb';
-import dbClient from './db';
 import { ObjectId } from 'mongodb';
-import redisClient from './redis';
+import { v4 as uuidv4 } from 'uuid';
+import { promises as pr } from 'fs';
+import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
 
 /**
  * The relative path of this folder is given by the environment
@@ -13,6 +15,7 @@ import redisClient from './redis';
  * If this variable is not present or empty,
  * use /tmp/files_manager as storing folder path
  */
+const fileQueue = new Queue('fileQueue');
 const folderP = process.env.folderP || '/tmp/files_manager';
 const validU = {
   okId(id) {
@@ -32,7 +35,7 @@ const userRedis = {
   },
 
   async getUserKI(request) {
-    const tt = 'X-Token'
+    const tt = 'X-Token';
     const user = { userId: null, key: null };
     const tk = request.header(tt);
     if (!tk) return user;
@@ -44,7 +47,7 @@ const userRedis = {
 const bodyU = {
   async validateB(request) {
     const { name, type, isPublic = false, data } = request.body;
-    const typesAllowed = ['file', 'image', 'folder'];
+    const typesAllowed = [ 'file', 'image', 'folder' ];
     let { parentId = 0 } = request.body;
     let msg = null;
     if (parentId === '0') {
@@ -84,7 +87,7 @@ const bodyU = {
 
     return rr;
   },
-}
+};
 const fileyU = {
   async getFile(query) {
     const file = await dbClient.filesCollection.findOne(query);
@@ -95,8 +98,11 @@ const fileyU = {
     const { name, type, isPublic, data } = fileP;
     let { parentId } = fileP;
     if (parentId !== 0) parentId = ObjectId(parentId);
-    const query = { userId: ObjectId(userId), name,
-      type, isPublic, parentId,
+    const query = { userId: ObjectId(userId),
+      name,
+      type,
+      isPublic,
+      parentId,
     };
     if (fileP.type !== 'folder') {
       const uuidF = uuidv4();
@@ -105,8 +111,8 @@ const fileyU = {
       query.localPath = path;
 
       try {
-        await fsPromises.mkdir(folderP, { recursive: true });
-        await fsPromises.writeFile(path, decodedF);
+        await pr.mkdir(folderP, { recursive: true });
+        await pr.writeFile(path, decodedF);
       } catch (err) {
         return { error: err.message, code: 400 };
       }
@@ -121,7 +127,7 @@ const fileyU = {
     const upd = await dbClient.filesCollection.findOneAndUpdate(
       query,
       set,
-      { returnOriginal: false }
+      { returnOriginal: false },
     );
     return upd;
   },
@@ -132,7 +138,7 @@ const fileyU = {
     delete ff._id;
     return ff;
   },
-}
+};
 
 class FilesController {
   /**
@@ -204,7 +210,7 @@ class FilesController {
     if (!user) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
-    if (!basicUtils.isValidId(fileId) || !bodyU.okId(userId)) {
+    if (!bodyU.okId(fileId) || !bodyU.okId(userId)) {
       return response.status(404).send({ error: 'Not found' });
     }
     const result = await fileyU.getFile({
@@ -215,7 +221,7 @@ class FilesController {
     if (!result) {
       return response.status(404).send({ error: 'Not found' });
     }
-    const file = fileUtils.processFile(result);
+    const file = fileyU.processFile(result);
     return response.status(200).send(file);
   }
 }
