@@ -3,12 +3,9 @@
  * AuthController.js that contains new endpoints.
  */
 import { v4 as uuidv4 } from 'uuid';
-import { userectId } from 'mongodb';
-import { ObjectId } from 'mongodb';
 import sha1 from 'sha1';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
-
 
 const userRedis = {
 
@@ -18,7 +15,7 @@ const userRedis = {
   },
 
   async getUserKI(request) {
-    const tt = 'X-Token'
+    const tt = 'X-Token';
     const user = { userId: null, key: null };
     const tk = request.header(tt);
     if (!tk) return user;
@@ -53,7 +50,7 @@ class AuthController {
       return response.status(401).send({ error: 'Unauthorized' });
     }
     const pwdDecoded = Buffer.from(pwd, 'base64').toString(
-      'utf-8'
+      'utf-8',
     );
     const [email, password] = pwdDecoded.split(':');
     if (!email || !password) {

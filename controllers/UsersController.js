@@ -2,12 +2,30 @@
  * Task 3. Create a new user.
  */
 
+import { ObjectId } from 'mongodb';
 import Queue from 'bull';
 import sha1 from 'sha1';
+import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
-
 const userQueue = new Queue('userQueue');
 
+const userRedis = {
+
+  async getUser(query) {
+    const user = await dbClient.usersCollection.findOne(query);
+    return user;
+  },
+
+  async getUserKI(request) {
+    const tt = 'X-Token';
+    const user = { userId: null, key: null };
+    const tk = request.header(tt);
+    if (!tk) return user;
+    user.key = `auth_${tk}`;
+    user.userId = await redisClient.get(user.key);
+    return user;
+  },
+};
 class UsersController {
   static async postNew(req, resp) {
     const { email, password } = req.body;
@@ -45,11 +63,11 @@ class UsersController {
    * Otherwise, return the user object (email and id only)
    * @param {*} request
    * @param {*} response
-   * @returns 
+   * @returns
    */
   static async getMe(request, response) {
-    const { id } = await userUtils.getUserIdAndKey(request);
-    const user = await userUtils.getUser({
+    const { id } = await userRedis.getUserKI(request);
+    const user = await userRedis.getUser({
       theId: ObjectId(id),
     });
 

@@ -2,7 +2,6 @@
  * Task 5. First file.
  */
 
-import { userectId } from 'mongodb';
 import { ObjectId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -49,7 +48,7 @@ const userRedis = {
 const bodyU = {
   async validateB(request) {
     const {
-      name, type, isPublic = false, data
+      name, type, isPublic = false, data,
     } = request.body;
     const typesAllowed = ['file', 'image', 'folder'];
     let { parentId = 0 } = request.body;
@@ -100,7 +99,7 @@ const fileyU = {
 
   async saveFile(userId, fileP, folderP) {
     const {
-      name, type, isPublic, data
+      name, type, isPublic, data,
     } = fileP;
     let { parentId } = fileP;
     if (parentId !== 0) parentId = ObjectId(parentId);
@@ -165,7 +164,7 @@ class FilesController {
       await fileQueue.add({});
     }
     const user = await userRedis.getUser({
-      _id: userectId(userId),
+      _id: ObjectId(userId),
     });
     if (!user) {
       return response.status(401).send({ error: 'Unauthorized' });
