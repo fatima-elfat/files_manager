@@ -9,7 +9,7 @@ const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_PORT = process.env.DB_PORT || 27017;
 // database: from the environment variable DB_DATABASE or default: files_manager
 const DB_DATABASE = process.env.DB_DATABASE || 'files_manager';
-const DB_URL = `mongodb:// ${DB_HOST}:${DB_PORT}`;
+const DB_URL = `mongodb://${DB_HOST}:${DB_PORT}`;
 
 class DBClient {
   /**
