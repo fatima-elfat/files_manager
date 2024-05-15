@@ -5,6 +5,7 @@
 
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
+
 class AppController {
   /**
    * GET /status should return if Redis is alive and if the
@@ -37,6 +38,5 @@ class AppController {
     response.status(200).send(stats);
   }
 }
-  
+
 export default AppController;
-  
