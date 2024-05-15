@@ -3,30 +3,30 @@
  * Inside the folder utils , create a file db.js that contains the class DBClient .
 */
 import { MongoClient } from 'mongodb';
-//host: from the environment variable DB_HOST or default: localhost
+// host: from the environment variable DB_HOST or default: localhost
 const DB_HOST = process.env.DB_HOST || 'localhost';
-//port: from the environment variable DB_PORT or default: 27017
+// port: from the environment variable DB_PORT or default: 27017
 const DB_PORT = process.env.DB_PORT || 27017;
-//database: from the environment variable DB_DATABASE or default: files_manager
+// database: from the environment variable DB_DATABASE or default: files_manager
 const DB_DATABASE = process.env.DB_DATABASE || 'files_manager';
-const DB_URL = `mongodb://${DB_HOST}:${DB_PORT}`;
+const DB_URL = `mongodb:// ${DB_HOST}:${DB_PORT}`;
 
 class DBClient {
-    /**
-     * the constructor that creates a client to MongoDB.
-     */
+  /**
+   * the constructor that creates a client to MongoDB.
+   */
   constructor() {
-    MongoClient.connect(
-        DB_URL,
-        { useUnifiedTopology: true },
-        (error, client) => {
-      if (!error) {
-        this.db = client.db(DB_DATABASE);
-        this.filesCollection = this.db.collection('files');
-        this.usersCollection = this.db.collection('users');
-      } else {
-        console.log(error.message);
-        this.db = false;
+  MongoClient.connect(
+      DB_URL,
+      { useUnifiedTopology: true },
+      (error, client) => {
+    if (!error) {
+      this.db = client.db(DB_DATABASE);
+      this.filesCollection = this.db.collection('files');
+      this.usersCollection = this.db.collection('users');
+    } else {
+      console.log(error.message);
+      this.db = false;
       }
     });
   }
@@ -37,7 +37,7 @@ class DBClient {
    * @returns {boolean}
    */
   isAlive() {
-    return !!this.db;
+  return !!this.db;
   }
 
   /**
@@ -47,8 +47,8 @@ class DBClient {
    * @return {number}
    */
   async nbUsers() {
-    const nb_users = this.usersCollection.countDocuments();
-    return nb_users;
+    const nbrUsers = this.usersCollection.countDocuments();
+    return nbrUsers;
   }
 
   /**
@@ -57,11 +57,11 @@ class DBClient {
    * @return {number}
    */
   async nbFiles() {
-    const nb_files = this.filesCollection.countDocuments();
-    return nb_files;
+    const nbrFiles = this.filesCollection.countDocuments();
+    return nbrFiles;
   }
 }
 
-//After the class definition, create and export an instance of DBClient called dbClient .
+// After the class definition, create and export an instance of DBClient called dbClient .
 const dbClient = new DBClient();
 export default dbClient;
