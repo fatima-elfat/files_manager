@@ -256,19 +256,21 @@ class FilesController {
     let page = Number(request.query.page) || 0;
     if (Number.isNaN(page)) page = 0;
     if (parentId !== 0 && parentId !== '0') {
-      if (!bodyU.okId(parentId))
+      if (!bodyU.okId(parentId)) {
         return response.status(401).send({ error: 'Unauthorized' });
+      }
       parentId = ObjectId(parentId);
       const folder = await fileyU.getFile({
         _id: ObjectId(parentId),
       });
-      if (!folder || folder.type !== 'folder')
+      if (!folder || folder.type !== 'folder') {
         return response.status(200).send([]);
+      }
     }
     const pp = [
       { $match: { parentId } },
       { $skip: page * 20 },
-      { $limit: 20, },
+      { $limit: 20 },
     ];
     const cursor = await fileyU.getFileP(pp);
     const fileL = [];
