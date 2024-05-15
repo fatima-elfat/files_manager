@@ -25,7 +25,7 @@ class DBClient {
         console.log(error.message);
         this.db = false;
       }
-      });
+    });
   }
 
   /**
