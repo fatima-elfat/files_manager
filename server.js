@@ -7,11 +7,11 @@ import controllerRouting from './routes/index';
  */
 
 const app = express();
-//listen on the port set by the
-//environment variable PORT or by default 5000
+//  listen on the port set by the
+//  environment variable PORT or by default 5000
 const ENV_PORT = process.env.PORT || 5000;
 app.use(express.json());
-//load all routes from the file routes/index.js.
+//  load all routes from the file routes/index.js.
 controllerRouting(app);
 app.listen(ENV_PORT, () => {
   console.log(`Server running on port ${ENV_PORT}`);

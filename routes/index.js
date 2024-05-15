@@ -3,7 +3,9 @@
  */
 
 import express from 'express';
-import UsersController from '../controllers/UsersController';
+// import UsersController from '../controllers/UsersController';
+
+const UsersController = require('../controllers/UsersController');
 
 function controllerRouting(app) {
   const router = express.Router();

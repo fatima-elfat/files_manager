@@ -9,7 +9,7 @@ import sha1 from 'sha1';
 const userQueue = new Queue('userQueue');
 
 class UsersController {
-  exports.addUser = async (req, resp) => {
+  const addUser = async (req, resp) => {
     const { email, password } = req.body;
   
     if (!email)
