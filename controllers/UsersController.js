@@ -9,7 +9,7 @@ import sha1 from 'sha1';
 const userQueue = new Queue('userQueue');
 
 class UsersController {
-  const addUser = async (req, resp) => {
+  static async addUser(req, resp){
     const { email, password } = req.body;
   
     if (!email)
@@ -38,6 +38,5 @@ class UsersController {
     }
 }
 
-module.exports = {
-  addUser,
-};
+
+export default UsersController;

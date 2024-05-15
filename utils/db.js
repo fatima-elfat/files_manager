@@ -17,18 +17,19 @@ class DBClient {
    */
   constructor() {
     MongoClient.connect(
-        DB_URL,
-        { useUnifiedTopology: true },
-        (error, client) => {
-      if (!error) {
-        this.db = client.db(DB_DATABASE);
-        this.filesCollection = this.db.collection('files');
-        this.usersCollection = this.db.collection('users');
-      } else {
-        console.log(error.message);
-       this.db = false;
+      DB_URL,
+      { useUnifiedTopology: true },
+      (error, client) => {
+        if (!error) {
+          this.db = client.db(DB_DATABASE);
+          this.filesCollection = this.db.collection('files');
+          this.usersCollection = this.db.collection('users');
+        } else {
+          console.log(error.message);
+        this.db = false;
+        }
       }
-    });
+    );
   }
 
   /**
