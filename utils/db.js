@@ -28,7 +28,7 @@ class DBClient {
         }
       });
     } catch (err) {
-      next(err);
+      // tt
     }
   }
 
