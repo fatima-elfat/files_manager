@@ -74,6 +74,14 @@ function controllerRouting(app) {
   router.get('/files/:id', (req, res) => {
     FilesController.getShow(req, res);
   });
+
+  /**
+   * Task 6. Get and list file.
+   * GET /files => FilesController.getIndex
+   */
+  router.get('/files', (req, res) => {
+    FilesController.getIndex(req, res);
+  });
 }
 
 export default controllerRouting;

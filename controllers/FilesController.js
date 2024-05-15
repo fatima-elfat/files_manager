@@ -144,6 +144,11 @@ const fileyU = {
     delete ff._id;
     return ff;
   },
+
+  async getFileP(query) {
+    const fileList = await dbClient.filesCollection.aggregate(query);
+    return fileList;
+  },
 };
 
 class FilesController {
@@ -229,6 +234,49 @@ class FilesController {
     }
     const file = fileyU.processFile(result);
     return response.status(200).send(file);
+  }
+
+  /**
+   * Task 6. Get and list file.
+   * Retrieve the user based on the token:
+   * If not found, return an error Unauthorized with a status code 401
+   * Based on the query parameters parentId and page,
+   * return the list of file document parentId
+   */
+  static async getIndex(request, response) {
+    const { userId } = await userRedis.getUserKI(request);
+    const user = await userRedis.getUser({
+      _id: ObjectId(userId),
+    });
+    if (!user) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
+    let parentId = request.query.parentId || '0';
+    if (parentId === '0') parentId = 0;
+    let page = Number(request.query.page) || 0;
+    if (Number.isNaN(page)) page = 0;
+    if (parentId !== 0 && parentId !== '0') {
+      if (!bodyU.okId(parentId))
+        return response.status(401).send({ error: 'Unauthorized' });
+      parentId = ObjectId(parentId);
+      const folder = await fileyU.getFile({
+        _id: ObjectId(parentId),
+      });
+      if (!folder || folder.type !== 'folder')
+        return response.status(200).send([]);
+    }
+    const pp = [
+      { $match: { parentId } },
+      { $skip: page * 20 },
+      { $limit: 20, },
+    ];
+    const cursor = await fileyU.getFileP(pp);
+    const fileL = [];
+    await cursor.forEach((doc) => {
+      const document = fileyU.processFile(doc);
+      fileL.push(document);
+    });
+    return response.status(200).send(fileL);
   }
 }
 
