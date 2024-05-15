@@ -9,7 +9,7 @@ import dbClient from '../utils/db';
 const userQueue = new Queue('userQueue');
 
 class UsersController {
-  static async addUser(req, resp) {
+  static async postNew(req, resp) {
     const { email, password } = req.body;
     if (!email) {
       return resp.status(400).send({ error: 'Missing email' });
@@ -37,6 +37,29 @@ class UsersController {
       userId: result.insertedId.toString(),
     });
     return resp.status(201).send(user);
+  }
+
+  /**
+   * Retrieve the user based on the token:
+   * If not found, return an error Unauthorized with a status code 401
+   * Otherwise, return the user object (email and id only)
+   * @param {*} request
+   * @param {*} response
+   * @returns 
+   */
+  static async getMe(request, response) {
+    const { id } = await userUtils.getUserIdAndKey(request);
+    const user = await userUtils.getUser({
+      theId: ObjectId(id),
+    });
+
+    if (!user) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
+    const userR = { id: user.theId, ...user };
+    delete userR._id;
+    delete userR.password;
+    return response.status(200).send(userR);
   }
 }
 

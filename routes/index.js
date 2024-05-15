@@ -4,6 +4,7 @@
 
 import express from 'express';
 import AppController from '../controllers/AppController';
+import AuthController from '../controllers/AuthController';
 import UsersController from '../controllers/UsersController';
 
 function controllerRouting(app) {
@@ -26,11 +27,35 @@ function controllerRouting(app) {
   });
 
   /**
+   * Task 4. Authenticate a user.
+   * GET /users/me => UserController.getMe
+   */
+  router.get('/users/me', (req, res) => {
+    UsersController.getMe(req, res);
+  });
+
+  /**
    * Task 3. Create a new user.
    * POST /users => UsersController.postNew
    */
   router.post('/users', (req, res) => {
-    UsersController.addUser(req, res);
+    UsersController.postNew(req, res);
+  });
+
+  /**
+   * Task 4. Authenticate a user.
+   * GET /connect => AuthController.getConnect
+   */
+  router.get('/connect', (req, res) => {
+    AuthController.getConnect(req, res);
+  });
+
+  /**
+   * Task 4. Authenticate a user.
+   * GET /disconnect => AuthController.getDisconnect
+   */
+  router.get('/disconnect', (req, res) => {
+    AuthController.getDisconnect(req, res);
   });
 }
 
