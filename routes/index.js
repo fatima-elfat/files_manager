@@ -5,6 +5,7 @@
 import express from 'express';
 import AppController from '../controllers/AppController';
 import AuthController from '../controllers/AuthController';
+import FilesController from '../controllers/FilesController';
 import UsersController from '../controllers/UsersController';
 
 function controllerRouting(app) {
@@ -56,6 +57,22 @@ function controllerRouting(app) {
    */
   router.get('/disconnect', (req, res) => {
     AuthController.getDisconnect(req, res);
+  });
+
+  /**
+   * Task 5. First file.
+   * POST /files => FilesController.postUpload
+   */
+  router.post('/files', (req, res) => {
+    FilesController.postUpload(req, res);
+  });
+
+  /**
+   * Task 6. Get and list file.
+   * GET /files/:id => FilesController.getShow
+   */
+  router.get('/files/:id', (req, res) => {
+    FilesController.getShow(req, res);
   });
 }
 
