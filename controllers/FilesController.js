@@ -5,6 +5,8 @@
 import { userectId } from 'mongodb';
 import { ObjectId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
+
+import Queue from 'bull';
 import { promises as pr } from 'fs';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
@@ -46,8 +48,10 @@ const userRedis = {
 };
 const bodyU = {
   async validateB(request) {
-    const { name, type, isPublic = false, data } = request.body;
-    const typesAllowed = [ 'file', 'image', 'folder' ];
+    const {
+      name, type, isPublic = false, data
+    } = request.body;
+    const typesAllowed = ['file', 'image', 'folder'];
     let { parentId = 0 } = request.body;
     let msg = null;
     if (parentId === '0') {
@@ -95,10 +99,13 @@ const fileyU = {
   },
 
   async saveFile(userId, fileP, folderP) {
-    const { name, type, isPublic, data } = fileP;
+    const {
+      name, type, isPublic, data
+    } = fileP;
     let { parentId } = fileP;
     if (parentId !== 0) parentId = ObjectId(parentId);
-    const query = { userId: ObjectId(userId),
+    const query = {
+      userId: ObjectId(userId),
       name,
       type,
       isPublic,
@@ -145,7 +152,7 @@ class FilesController {
    * POST /files should create a new file in DB and in disk
    * @param {*} request
    * @param {*} response
-   * @returns 
+   * @returns
    */
   static async postUpload(request, response) {
     //  Retrieve the user based on the token.
@@ -164,7 +171,7 @@ class FilesController {
       return response.status(401).send({ error: 'Unauthorized' });
     }
     const { error: validationError, fileP } = await bodyU.validateB(
-      request
+      request,
     );
     if (validationError) {
       return response.status(400).send({ error: validationError });
@@ -173,7 +180,7 @@ class FilesController {
       return response.status(400).send({ error: 'Parent not found' });
     }
     const { error, code, fil } = await fileyU.saveFile(
-      userId, fileP, folderP
+      userId, fileP, folderP,
     );
     if (error) {
       if (response.body.type === 'image') await fileQueue.add({ userId });
