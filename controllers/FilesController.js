@@ -292,27 +292,26 @@ class FilesController {
     // Retrieve the user based on the token
     const tk = request.header('X-Token') || null;
     // If not found, return an error Unauthorized with a
-    //status code 401
+    // status code 401
     if (!tk) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
-    const tkR = await RedisClient.get(`auth_${tk}`);
+    const tkR = await redisClient.get(`auth_${tk}`);
     if (!tkR) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
-    const user = await DBClient.db.collection('users').findOne({ _id: ObjectId(tkR) });
+    const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(tkR) });
     if (!user) return response.status(401).send({ error: 'Unauthorized' });
     // If no file document is linked to the user and the ID passed as parameter,
-    //return an error Not found with a status code 404
+    // return an error Not found with a status code 404
     const idFile = request.params.id || '';
-    let fileD = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
+    let fileD = await dbClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
     if (!fileD) {
       return response.status(404).send({ error: 'Not found' });
     }
-    
     // Update the value of isPublic to true
-    await DBClient.db.collection('files').update({ _id: ObjectId(idFile) }, { $set: { isPublic: true } });
-    fileD = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
+    await dbClient.db.collection('files').update({ _id: ObjectId(idFile) }, { $set: { isPublic: true } });
+    fileD = await dbClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
     // return the file document with a status code 200
     return response.send({
       id: fileD._id,
@@ -338,26 +337,26 @@ class FilesController {
     if (!tk) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
-    const tkR = await RedisClient.get(`auth_${tk}`);
+    const tkR = await redisClient.get(`auth_${tk}`);
     // If not found, return an error Unauthorized with a status code 401
     if (!tkR) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
-    const user = await DBClient.db.collection('users').findOne({ _id: ObjectId(tkR) });
+    const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(tkR) });
     // If not found, return an error Unauthorized with a status code 401
     if (!user) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
     const idFile = request.params.id || '';
-    let fileD = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
+    let fileD = await dbClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
     // If no file document is linked to the user and the ID passed as parameter
     // return an error Not found with a status code 404
     if (!fileD) {
       return response.status(404).send({ error: 'Not found' });
     }
     // Update the value of isPublic to false
-    await DBClient.db.collection('files').update({ _id: ObjectId(idFile), userId: user._id }, { $set: { isPublic: false } });
-    fileD = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
+    await dbClient.db.collection('files').update({ _id: ObjectId(idFile), userId: user._id }, { $set: { isPublic: false } });
+    fileD = await dbClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
     // And return the file document with a status code 200
     return response.send({
       id: fileD._id,
@@ -380,7 +379,7 @@ class FilesController {
   static async getFile(request, response) {
     const idFile = request.params.id || '';
     const size = request.query.size || 0;
-    const fileD = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile) });
+    const fileD = await dbClient.db.collection('files').findOne({ _id: ObjectId(idFile) });
     // If no file document is linked to the ID passed as parameter,
     // return an error Not found with a status code 404
     if (!fileD) {
@@ -393,9 +392,9 @@ class FilesController {
     let owner = false;
     const tk = request.header('X-Token') || null;
     if (tk) {
-      const tkR = await RedisClient.get(`auth_${tk}`);
+      const tkR = await redisClient.get(`auth_${tk}`);
       if (tkR) {
-        user = await DBClient.db.collection('users').findOne({ _id: ObjectId(tkR) });
+        user = await dbClient.db.collection('users').findOne({ _id: ObjectId(tkR) });
         if (user) owner = user._id.toString() === userId.toString();
       }
     }
