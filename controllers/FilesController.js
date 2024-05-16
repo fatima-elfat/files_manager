@@ -4,7 +4,7 @@
 
 import { ObjectId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
-
+import mime from 'mime-types';
 import Queue from 'bull';
 import { promises as pr } from 'fs';
 import dbClient from '../utils/db';
@@ -279,6 +279,152 @@ class FilesController {
       fileL.push(document);
     });
     return response.status(200).send(fileL);
+  }
+
+  /**
+   * Task 7. File publish/unpublish.
+   * PUT /files/:id/publish => FilesController.putPublish
+   * @param {*} request
+   * @param {*} response
+   * @returns
+   */
+  static async putPublish(request, response) {
+    // Retrieve the user based on the token
+    const tk = request.header('X-Token') || null;
+    // If not found, return an error Unauthorized with a
+    //status code 401
+    if (!tk) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
+    const tkR = await RedisClient.get(`auth_${tk}`);
+    if (!tkR) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
+    const user = await DBClient.db.collection('users').findOne({ _id: ObjectId(tkR) });
+    if (!user) return response.status(401).send({ error: 'Unauthorized' });
+    // If no file document is linked to the user and the ID passed as parameter,
+    //return an error Not found with a status code 404
+    const idFile = request.params.id || '';
+    let fileD = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
+    if (!fileD) {
+      return response.status(404).send({ error: 'Not found' });
+    }
+    
+    // Update the value of isPublic to true
+    await DBClient.db.collection('files').update({ _id: ObjectId(idFile) }, { $set: { isPublic: true } });
+    fileD = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
+    // return the file document with a status code 200
+    return response.send({
+      id: fileD._id,
+      userId: fileD.userId,
+      name: fileD.name,
+      type: fileD.type,
+      isPublic: fileD.isPublic,
+      parentId: fileD.parentId,
+    });
+  }
+
+  /**
+   * Task 7. File publish/unpublish.
+   * PUT /files/:id/publish => FilesController.putUnpublish
+   * @param {*} request
+   * @param {*} response
+   * @returns
+   */
+  static async putUnpublish(request, response) {
+    // Retrieve the user based on the token
+    const tk = request.header('X-Token') || null;
+    // If not found, return an error Unauthorized with a status code 401
+    if (!tk) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
+    const tkR = await RedisClient.get(`auth_${tk}`);
+    // If not found, return an error Unauthorized with a status code 401
+    if (!tkR) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
+    const user = await DBClient.db.collection('users').findOne({ _id: ObjectId(tkR) });
+    // If not found, return an error Unauthorized with a status code 401
+    if (!user) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
+    const idFile = request.params.id || '';
+    let fileD = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
+    // If no file document is linked to the user and the ID passed as parameter
+    // return an error Not found with a status code 404
+    if (!fileD) {
+      return response.status(404).send({ error: 'Not found' });
+    }
+    // Update the value of isPublic to false
+    await DBClient.db.collection('files').update({ _id: ObjectId(idFile), userId: user._id }, { $set: { isPublic: false } });
+    fileD = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile), userId: user._id });
+    // And return the file document with a status code 200
+    return response.send({
+      id: fileD._id,
+      userId: fileD.userId,
+      name: fileD.name,
+      type: fileD.type,
+      isPublic: fileD.isPublic,
+      parentId: fileD.parentId,
+    });
+  }
+
+  /**
+   * Task 8. File data.
+   * Task 9. Image Thumbnails.
+   * PUT /files/:id/publish => FilesController.putUnpublish
+   * @param {*} request
+   * @param {*} response
+   * @returns
+   */
+  static async getFile(request, response) {
+    const idFile = request.params.id || '';
+    const size = request.query.size || 0;
+    const fileD = await DBClient.db.collection('files').findOne({ _id: ObjectId(idFile) });
+    // If no file document is linked to the ID passed as parameter,
+    // return an error Not found with a status code 404
+    if (!fileD) {
+      return response.status(404).send({ error: 'Not found' });
+    }
+    const { isPublic } = fileD;
+    const { userId } = fileD;
+    const { type } = fileD;
+    let user = null;
+    let owner = false;
+    const tk = request.header('X-Token') || null;
+    if (tk) {
+      const tkR = await RedisClient.get(`auth_${tk}`);
+      if (tkR) {
+        user = await DBClient.db.collection('users').findOne({ _id: ObjectId(tkR) });
+        if (user) owner = user._id.toString() === userId.toString();
+      }
+    }
+    /**
+     * If the file document (folder or file) is not public
+     * (isPublic: false) and no user authenticate or not
+     * the owner of the file, return an error Not found with
+     * a status code 404
+     */
+    if (!isPublic && !owner) {
+      return response.status(404).send({ error: 'Not found' });
+    }
+    // If the type of the file document is folder, return an error A folder doesn't have content
+    // with a status code 400
+    if (['folder'].includes(type)) return response.status(400).send({ error: 'A folder doesn\'t have content' });
+    const realPath = size === 0 ? fileD.localPath : `${fileD.localPath}_${size}`;
+
+    try {
+      // By using the module mime-types,
+      // get the MIME-type based on the name of the file
+      const dataFile = pr.readFileSync(realPath);
+      const mimeType = mime.contentType(fileD.name);
+      response.setHeader('Content-Type', mimeType);
+      // Return the content of the file with the correct MIME-type
+      return response.send(dataFile);
+    } catch (error) {
+      // If the file is not locally present, return an error Not found with a status code 404
+      return response.status(404).send({ error: 'Not found' });
+    }
   }
 }
 

@@ -82,6 +82,30 @@ function controllerRouting(app) {
   router.get('/files', (req, res) => {
     FilesController.getIndex(req, res);
   });
+
+  /**
+   * Task 7. File publish/unpublish.
+   * PUT /files/:id/publish => FilesController.putPublish
+   */
+  router.put('/files/:id/publish', (req, res) => {
+    FilesController.putPublish(req, res);
+  });
+
+  /**
+   * Task 7. File publish/unpublish.
+   * PUT /files/:id/publish => FilesController.putUnpublish
+   */
+  router.put('/files/:id/unpublish', (req, res) => {
+    FilesController.putUnpublish(req, res);
+  });
+
+  /**
+   * Task 8. File data.
+   * GET /files/:id/data => FilesController.getFile
+   */
+  router.get('/files/:id/data', (req, res) => {
+    FilesController.getFile(req, res);
+  });
 }
 
 export default controllerRouting;
